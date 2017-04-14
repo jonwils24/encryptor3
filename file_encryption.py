@@ -11,11 +11,13 @@ from Crypto.Cipher import AES
 
 pad = lambda s: s + (32 - len(s) % 32) * ' '
 
+
 def encrypt(message, key, key_size=256):
     message = pad(message)
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     return iv + cipher.encrypt(message)
+
 
 def decrypt(ciphertext, key):
     iv = ciphertext[:AES.block_size]
@@ -23,10 +25,12 @@ def decrypt(ciphertext, key):
     plaintext = cipher.decrypt(ciphertext[AES.block_size:])
     return plaintext.rstrip(b"\0")
 
+
 def encrypt_file(file_name, key):
     with open(file_name, 'rb') as fo:
         plaintext = json.dumps(ast.literal_eval(fo.read()))
     return encrypt(plaintext, key)
+
 
 def decrypt_file(file_name, key):
     with open(file_name, 'rb') as fo:
@@ -35,47 +39,71 @@ def decrypt_file(file_name, key):
     with open(file_name[:-4], 'wb') as fo:
         fo.write(dec)
 
- 
-class AWS_Encrypted_File_Manager:
 
-    def __init__(self, region, kms_key):
+class AWS_Encryptor:
+
+    def __init__(self, region, project, bucket=None, filename="env"):
         self.region = region
-        self.kms_key = kms_key
+        self.project = project
+        self.bucket = bucket
+        self.filename = filename
         self.s3 = boto3.client('s3', region)
         self.kms = boto3.client('kms', region)
 
-    def generate_kms_keys(self):
-        data_key_req =  self.kms.generate_data_key(
-            KeyId=self.kms_key,
+    def __get_kms_key(self):
+        r = kms.list_aliases()
+        search_name = 'alias/' + self.project
+        try:
+            [kms_key] = [str(x['TargetKeyId']
+                             for x in r['Aliases'] 
+                             if search_name == x['AliasName'])]
+        except ValueError as e:
+            key = kms.create_key()
+            kms_key = str(key['KeyMetaData']['KeyId'])
+            kms.create_alias(
+                AliasName='alias/' + project,
+                TargetKeyId=kms_key
+            )
+        return kms_key
+
+    def __generate_kms_keys(self):
+        data_key_req = self.kms.generate_data_key(
+            KeyId=self.__get_kms_key,
             KeySpec='AES_256'
         )
 
         return data_key_req['Plaintext'], data_key_req['CiphertextBlob']
 
-    def encrypt_and_upload(self, filepath, bucket, filename):
-        data_key, data_key_ciphered = self.generate_kms_keys()
-        self.upload_s3(
+    def encrypt_and_upload(self, filepath, bucket=self.bucket):
+        data_key, data_key_ciphered = self.__generate_kms_keys()
+        self.__upload_s3(
             bucket,
-            encrypt_file(filepath, data_key), 
-            filename,
+            encrypt_file(filepath, data_key),
+            filepath.rsplit('/')[-1],
             data_key_ciphered
         )
 
-    def upload_s3(self, bucket, encrypted_file, filename, cipher):
+    def __upload_s3(self, bucket, encrypted_file, filename=self.filename, cipher):
         self.s3.put_object(
             Bucket=bucket,
             Body=encrypted_file,
-            Key=filename,
+            Key="{}-{}".format(filename, self.project),
             Metadata={
                 'encryption-key': base64.b64encode(cipher)
             }
         )
 
-    def download_and_decrypt(self, bucket, filename):
-        encrypted_file = self.s3.get_object(
-            Bucket=bucket,
-            Key=filename
-        )
+    def download_and_decrypt(self, filename=self.filename, bucket=self.bucket):
+        try:
+            encrypted_file = self.s3.get_object(
+                Bucket=bucket,
+                Key=filename
+            )
+        except TypeError as e:
+            encrypted_file = self.s3.get_object(
+                Bucket=bucket,
+                Key="{}-{}".format(filename, self.project)
+            )
 
         data_key_ciphered = base64.b64decode(
             encrypted_file['Metadata']['encryption-key'])
@@ -83,27 +111,14 @@ class AWS_Encrypted_File_Manager:
         data_key = self.kms.decrypt(
             CiphertextBlob=data_key_ciphered)['Plaintext']
 
-
         self.bucket = bucket
         self.filename = filename
         self.__info = ast.literal_eval(
             decrypt(
-                encrypted_file['Body'].read(), 
+                encrypted_file['Body'].read(),
                 data_key
             )
         )
-
-
-    def get_file_content(self):
-        s3 = boto3.resource('s3', self.region)
-        content_object = s3.Object(self.bucket, self.filename)
-        return ast.literal_eval(
-            decrypt(content_object.get()['Body'].read(), self.data_key))
-
-    def get_file(self, bucket, filename):
-        file = self.s3.get_object(Bucket=bucket, Key=filename)
-        self.__info = ast.literal_eval(decrypt(file['Body'].read(), self.data_key))
-        return self.__info
 
     def get(self, key, default_value=None):
         try:
@@ -125,16 +140,15 @@ class AWS_Encrypted_File_Manager:
             self.download_and_decrypt()
 
         self.__info[key] = value
-        data_key, data_key_ciphered = self.generate_kms_keys()
-        self.upload_s3(
+        data_key, data_key_ciphered = self.__generate_kms_keys()
+        self.__upload_s3(
             self.bucket,
-            encrypt(json.dumps(self.__info), data_key), 
+            encrypt(json.dumps(self.__info), data_key),
             self.filename,
             data_key_ciphered
         )
-        
-        return {key: value}
 
+        return value
 
 
 def main():
@@ -150,9 +164,9 @@ def main():
         filename = os.listdir('./upload_file')[0]
         filepath = './upload_file/' + filename
 
-        kms = boto3.client('kms', args.region) # DO NOT hardcode region
+        kms = boto3.client('kms', args.region)  # DO NOT hardcode region
         data_key_req = kms.generate_data_key(
-            KeyId='b1558cc7-fc6a-4131-9d43-cc830f165ba4', # DO NOT hardcode KeyId
+            KeyId='b1558cc7-fc6a-4131-9d43-cc830f165ba4',  # DO NOT hardcode KeyId
             KeySpec='AES_256'
         )
         data_key = data_key_req['Plaintext']
@@ -162,9 +176,9 @@ def main():
         encrypted_filename = filename + '.enc'
         encrypted_filepath = './upload_file/' + encrypted_filename
 
-        s3 = boto3.client('s3', args.region) # DO NOT hardcode region
+        s3 = boto3.client('s3', args.region)  # DO NOT hardcode region
         s3.put_object(
-            Bucket=args.bucket, # DO NOT hardcode bucket name
+            Bucket=args.bucket,  # DO NOT hardcode bucket name
             Body=open(encrypted_filepath, 'r'),
             Key=filename,
             Metadata={'encryption-key': base64.b64encode(data_key_ciphered)}
@@ -191,4 +205,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
