@@ -1,2 +1,3 @@
 pycrypto
 boto3
+kmsclient

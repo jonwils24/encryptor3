@@ -4,8 +4,6 @@ WORKDIR /usr/src/app
 
 COPY . /usr/src/app
 
-VOLUME ["/usr/src/app/downloaded_file"]
-
 RUN mkdir /root/.aws
 COPY ./credentials /root/.aws/credentials
 
