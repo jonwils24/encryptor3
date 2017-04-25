@@ -1,3 +1,0 @@
-app:
-  build: ./
-  command: python -m SimpleHTTPServer

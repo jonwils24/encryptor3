@@ -1,3 +1,0 @@
-pycrypto
-boto3
-click

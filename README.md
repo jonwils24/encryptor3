@@ -172,6 +172,8 @@ secret_3 = client.put(
 
 ## Credits
 Owen Rumney, for his great blog post, [Client side encryption using Boto3 and AWS KMS](http://www.owenrumney.co.uk/2015/01/06/Boto3-client-side-encryption-using-KMS.html).
+
+Kushal Das, for his great blog post, [Building command line tools in Python with click](https://kushaldas.in/posts/building-command-line-tools-in-python-with-click.html)
 ## License
 Copyright 2017 Jonathan Wilson
 
