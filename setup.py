@@ -6,9 +6,9 @@ setup(
     name="encryptor",
     version='0.1',
     description='AWS File Encryptor',
-    long_description=open(README).read(),
     url='https://github.com/jonwils24/encryptor',
     author='Jonathan Wilson',
+    author_email='wilsonwjonathan@gmail.com',
     py_modules=['encryptor'],
     packages=find_packages(),
     install_requires=[
