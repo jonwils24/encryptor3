@@ -62,7 +62,6 @@ To view decrypted file, run command from command line:
 
 ```shell
 $ encryptor decrypt_download <aws region> <s3 bucket> <optional=s3_key>
-
 ```
 Default s3_key is `secrets.json.enc`.
 
@@ -172,7 +171,7 @@ secret_3 = client.put(
 ```
 
 ## Credits
-Owen Rumney, for [his great blog post](http://www.owenrumney.co.uk/2015/01/06/Boto3-client-side-encryption-using-KMS.html) on encrypting/decrypting with AWS KMS.
+Owen Rumney, for his great blog post, [Client side encryption using Boto3 and AWS KMS](http://www.owenrumney.co.uk/2015/01/06/Boto3-client-side-encryption-using-KMS.html).
 ## License
 Copyright 2017 Jonathan Wilson
 
