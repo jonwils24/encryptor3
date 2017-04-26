@@ -32,9 +32,7 @@ def decrypt(ciphertext, key):
 
 def encrypt_file(file_name, key):
     with open(file_name, 'rb') as fo:
-        x = fo.read()
-        logging.info("XXXXX {}".format(x))
-        plaintext = json.dumps(x)
+        plaintext = json.dumps(ast.literal_eval(fo.read().decode('utf-8')))
     return encrypt(plaintext, key)
 
 
