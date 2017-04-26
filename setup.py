@@ -4,7 +4,7 @@ README = "README.md"
 
 setup(
     name="encryptor",
-    version='0.2',
+    version='0.3',
     description='AWS File Encryptor',
     url='https://github.com/jonwils24/encryptor',
     author='Jonathan Wilson',

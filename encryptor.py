@@ -113,6 +113,7 @@ class AWS_Encryptor:
         except Exception as e:
             logging.error("Error uploading to S3 region: {} bucket: {}".format(
                 self.region, bucket))
+            raise e
 
     def decrypt_download(self, s3_key=None, bucket=None):
         s3_key = s3_key or "secrets.json.enc"
