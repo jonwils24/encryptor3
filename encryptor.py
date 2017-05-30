@@ -32,7 +32,7 @@ def decrypt(ciphertext, key):
 
 def encrypt_file(file_name, key):
     with open(file_name, 'rb') as fo:
-        plaintext = json.dumps(ast.literal_eval(fo.read().decode('utf-8')))
+        plaintext = fo.read()
     return encrypt(plaintext, key)
 
 
@@ -138,12 +138,7 @@ class AWS_Encryptor:
             CiphertextBlob=data_key_ciphered)['Plaintext']
 
         file_contents = encrypted_file['Body'].read()
-        self.__info = ast.literal_eval(
-            decrypt(
-                file_contents,
-                data_key
-            )
-        )
+        self.__info = ast.literal_eval(decrypt(file_contents, data_key))
         self.s3_key = s3_key
 
         return self.__info

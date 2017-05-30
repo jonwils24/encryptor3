@@ -47,3 +47,6 @@ coverage.xml
 docs/_build/
 
 credentials
+Dockerfile
+docker-compose.yml
+requirements.txt
