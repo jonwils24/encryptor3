@@ -13,7 +13,8 @@ from Crypto.Cipher import AES
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-pad = lambda s: s + (32 - len(s) % 32) * ' '
+def pad(s):
+    return s + b"\0" * (AES.block_size - len(s) % AES.block_size)
 
 
 def encrypt(message, key, key_size=256):
@@ -107,12 +108,13 @@ class AWS_Encryptor:
                 Body=encrypted_file,
                 Key=s3_key,
                 Metadata={
-                    'encryption-key': base64.b64encode(cipher)
+                    'encryption-key': base64.b64encode(cipher).decode("utf-8")
                 }
             )
         except Exception as e:
             logging.error("Error uploading to S3 region: {} bucket: {}".format(
                 self.region, bucket))
+            print("cipher", type(cipher))
             raise e
 
     def decrypt_download(self, s3_key=None, bucket=None):
@@ -138,7 +140,7 @@ class AWS_Encryptor:
             CiphertextBlob=data_key_ciphered)['Plaintext']
 
         file_contents = encrypted_file['Body'].read()
-        self.__info = ast.literal_eval(decrypt(file_contents, data_key))
+        self.__info = ast.literal_eval(decrypt(file_contents, data_key).decode("utf-8"))
         self.s3_key = s3_key
 
         return self.__info
@@ -166,7 +168,7 @@ class AWS_Encryptor:
         data_key, data_key_ciphered = self.__generate_kms_keys()
         self.__upload_s3(
             self.bucket,
-            encrypt(json.dumps(self.__info), data_key),
+            encrypt(json.dumps(self.__info).encode("utf-8"), data_key),
             data_key_ciphered,
             self.s3_key
         )
