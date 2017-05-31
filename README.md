@@ -1,6 +1,8 @@
 # AWS Encryptor
-CLI and Python client for encrypting/decrypting a json settings file using KMS and upload to/download from S3.  Upload an encrypted copy of your secret variables from the command line and access them from your python files.
+CLI and Python3 client for encrypting/decrypting a json settings file using KMS and upload to/download from S3.  Upload an encrypted copy of your secret variables from the command line and access them from your python files.
 ## Requirements
+Python3, click link for [Python2 version](https://github.com/jonwils24/encryptor).
+
 Must have an AWS account with access to S3 and KMS, and an AWS credentials file stored in your `~/.aws` directory with your `aws_access_key_id` and `aws_secret_access_key`:
 
 ```shell
@@ -21,14 +23,14 @@ Create a json file with your secret variables; `secrets.json` is the default fil
 ```
 ## Installation
 ```shell
-$ pip install encryptor
+$ pip install encryptor3
 ```
 ## Usage
 ### Encrypting & Uploading
 To encrypt and upload a file, run command from command line:
 
 ```shell
-$ encryptor encrypt_upload <aws region> <s3 bucket> <optional=filepath>
+$ encryptor3 encrypt_upload <aws region> <s3 bucket> <optional=filepath>
 ```
 
 Default is a `secrets.json` file in the same directory.
@@ -36,18 +38,18 @@ Default is a `secrets.json` file in the same directory.
 Encrypt and upload `secrets.json` to S3 bucket:
 
 ```shell
-$ encryptor encrypt_upload us-west-1 my-bucket
+$ encryptor3 encrypt_upload us-west-1 my-bucket
 ```
 
 Encrypt and upload `my-settings.txt` file from same directory:
 
 ```shell
-$ encryptor encrypt_upload us-west-1 my-bucket my-settings.txt
+$ encryptor3 encrypt_upload us-west-1 my-bucket my-settings.txt
 ```
 Encrypt and upload `my-settings.txt` file from child directory:
 
 ```shell
-$ encryptor encrypt_upload us-west-1 my-bucket ./child_dir/my-settings.txt
+$ encryptor3 encrypt_upload us-west-1 my-bucket ./child_dir/my-settings.txt
 ```
 
 The S3 key name of your encrypted files will be the original file name plus `.enc`:
@@ -61,37 +63,37 @@ The S3 key name of your encrypted files will be the original file name plus `.en
 To view decrypted file, run command from command line:
 
 ```shell
-$ encryptor decrypt_download <aws region> <s3 bucket> <optional=s3_key>
+$ encryptor3 decrypt_download <aws region> <s3 bucket> <optional=s3_key>
 ```
 Default s3_key is `secrets.json.enc`.
 
 Download and decrypt `secrets.json.enc` from S3 bucket:
 
 ```shell
-$ encryptor download_decrypt us-west-1 my-bucket
+$ encryptor3 download_decrypt us-west-1 my-bucket
 ```
 
 Download and decrypt `my-settings.txt.enc` from S3 bucket:
 
 ```shell
-$ encryptor download_decrypt us-west-1 my-bucket my-settings.txt.enc
+$ encryptor3 download_decrypt us-west-1 my-bucket my-settings.txt.enc
 ```
 This command will print the contents of the decrypted file to the console:
 
 ```shell
-$ encryptor download_decrypt us-west-1 my-bucket
+$ encryptor3 download_decrypt us-west-1 my-bucket
 $ {'secret 1': 'a', 'secret 2': 'b', 'secret 3': 'c'}
 ```
 #### Python Client
 To use python client, import AWS_Encryptor from encryptor:
 
 ```python
-from encryptor import AWS_Encryptor
+from encryptor3 import AWS_Encryptor
 ```
 Initialize client:
 
 ```python
-from encryptor import AWS_Encryptor
+from encryptor3 import AWS_Encryptor
 
 client = AWS_Encryptor(<aws region>, <bucket>)
 ```
@@ -107,7 +109,7 @@ client.get(
 ```
 
 ```python
-from encryptor import AWS_Encryptor
+from encryptor3 import AWS_Encryptor
 
 client = AWS_Encryptor(<aws region>, <bucket>)
 
@@ -146,7 +148,7 @@ client.put(
 ```
 
 ```python
-from encryptor import AWS_Encryptor
+from encryptor3 import AWS_Encryptor
 
 client = AWS_Encryptor(<aws region>, <bucket>)
 
